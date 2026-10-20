@@ -30,9 +30,12 @@ function AdminLeavePage() {
         const result = await res.json();
         setLeaves(result.data || []);
       } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Fetch leaves error:", errData);
         setLeaves(dummyLeaveData);
       }
-    } catch {
+    } catch (err) {
+      console.error("Network error fetching leaves:", err);
       setLeaves(dummyLeaveData);
     } finally {
       setLoading(false);
@@ -61,10 +64,10 @@ function AdminLeavePage() {
         body: JSON.stringify({ status }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        // Update locally
+        // Update locally in real time
         setLeaves((prev) =>
           prev.map((l) =>
             String(l._id || l.id) === String(id) ? { ...l, status } : l
@@ -72,7 +75,7 @@ function AdminLeavePage() {
         );
         setToastMessage({
           type: "success",
-          text: `Leave status updated to ${status} successfully!`,
+          text: `Leave request has been ${status.toLowerCase()} successfully!`,
         });
         setTimeout(() => setToastMessage(null), 3500);
       } else {
@@ -85,7 +88,7 @@ function AdminLeavePage() {
       console.error("Failed to update leave status", err);
       setToastMessage({
         type: "danger",
-        text: "Network error while updating leave status.",
+        text: "Network error while updating leave status. Please check backend connection.",
       });
     } finally {
       setProcessing(null);

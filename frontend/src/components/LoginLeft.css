@@ -1,0 +1,145 @@
+
+
+.bg-image {
+       position: relative;          /* Important */
+      background:
+    
+        url("/image1.jpg");
+
+
+
+    background-size: cover;
+    
+   
+    height: 100vh;
+}
+
+.overlay {
+        position: absolute;          /* Covers the parent */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(20, 20, 30, 0.5);
+
+  
+  
+
+    color: white;
+    
+}
+
+.glass {
+      
+        display: inline-flex;   /* Makes the box only as wide as its content */
+    justify-content: center;
+    align-items: center;
+    border: 1px solid  #4F46E5;
+    font-size: 15px;
+    font-weight: 500;
+     line-height: 1;  
+     border-radius: 60px;
+    
+    
+    
+}
+
+.gradient-text {
+      
+    background: linear-gradient(90deg, #4F46E5, #3B82F6, #06B6D4);
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    font-weight: 700;
+}
+
+.gradient-heading {
+   
+
+  background: linear-gradient(90deg, #7C3AED, #60A5FA, #8B5CF6, #3B82F6, #06B6D4);
+    -webkit-background-clip: text;
+     background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    
+}
+
+.text{
+  
+    margin-top: 150px;
+    margin-left: 55px;
+}
+
+
+.portal-btn {
+  
+  width: 360px;
+  height:80px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 15px 20px;
+
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-left: 5px solid #5B3DF5;
+  border-radius: 16px;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.portal-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(91, 61, 245, 0.18);
+}
+
+.icon-box {
+  width: 50px;
+  height: 50px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #f4f1ff;
+  border-radius: 14px;
+}
+
+.portal-btn h5 {
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.portal-btn p {
+  font-size: 13px;
+}
+
+.loginForm {
+  margin-top: 6rem;
+  margin-left: 5rem;
+  margin-right: 4rem;
+}
+
+@media (max-width: 768px) {
+  .loginForm {
+    margin-right: 0px;
+    width: 100%;
+    
+  }
+}
+
+.signIn-btn{
+  width: 100%;
+    background: linear-gradient(90deg, #4F46E5, #3B82F6, #06B6D4);
+}

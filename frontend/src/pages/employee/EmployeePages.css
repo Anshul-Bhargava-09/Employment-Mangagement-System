@@ -1,0 +1,54 @@
+.icon-btn {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 50%;
+    background: #f8fbff;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+    transition: .3s;
+}
+
+/* Leave page css */
+
+.modal-content {
+  border-radius: 18px !important;
+}
+
+.modal-header {
+    
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.form-control,
+.form-select {
+  height: 48px;
+  border-radius: 10px;
+}
+
+textarea.form-control {
+  height: 120px;
+  resize: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.2);
+}
+
+.btn {
+  border-radius: 10px;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+}

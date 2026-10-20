@@ -1,0 +1,131 @@
+.employee-card{
+    width:290px;
+    border:1px solid #e8edf5;
+    border-radius:10px;
+    overflow:hidden;
+    background:#fff;
+    transition:.3s;
+    cursor:pointer;
+}
+
+.employee-card:hover{
+    transform:translateY(-5px);
+   
+    border: 2px solid #e8edf5;
+    color:#fff;
+    transform:translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+
+}
+
+
+
+.card-top{
+    height:230px;
+    background:#f8fbff;
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+      transition: .3s;
+}
+
+.department{
+    position:absolute;
+    top:15px;
+    left:15px;
+    background:white;
+    padding:6px 14px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    color:#4d5b76;
+    box-shadow:0 3px 8px rgba(0,0,0,.08);
+}
+
+.avatar{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    background:#eef1ff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:36px;
+    font-weight:600;
+    color:#6a72ff;
+}
+
+.card-bottom{
+    padding:10px;
+   
+}
+
+.card-bottom h4{
+    margin:0;
+   margin-left: 16px;
+    font-size:18px;
+    color:#1d2333;
+}
+
+.card-bottom p{
+    margin-top:4px;
+    color:#6d7c98;
+    font-size:12px;
+    margin-left: 16px;
+}
+
+
+
+
+/* -------------------- Icons -------------------- */
+
+.card-icons {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+
+    display: flex;
+    gap: 10px;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+
+    transition: .3s;
+    z-index: 10;
+}
+
+.employee-card:hover .card-icons {
+    opacity: 1;
+    visibility: visible;
+    
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 50%;
+    background: #f8fbff;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+    transition: .3s;
+}
+
+.edit-btn {
+    color: #2563eb;
+}
+
+.delete-btn {
+    color: red;
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+}

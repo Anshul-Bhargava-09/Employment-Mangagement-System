@@ -43,8 +43,12 @@ app.use("/api/leave", leaveRouter);
 app.use("/api/payslips", payslipRouter);
 app.use("/api/dashboard", dashboardRouter);
 
-// SPA client-side routing fallback
-app.get("*", (req, res) => {
+// SPA client-side routing fallback (Express 5 compatible)
+app.use((req, res, next) => {
+  // If it's an API route that wasn't matched, send 404 JSON instead of index.html
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ message: "API endpoint not found" });
+  }
   res.sendFile(path.join(publicPath, "index.html"));
 });
 

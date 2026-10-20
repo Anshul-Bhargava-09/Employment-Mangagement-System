@@ -28,12 +28,15 @@ function ProfileForm({ profile, onSave }) {
     });
   };
 
+  const [saved, setSaved] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-     
-    // Send updated data to parent/API
-    // onSave(formData);
-    console.log("your form data is submit");
+    if (onSave) {
+      onSave(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
   };
 
   return (
@@ -119,8 +122,13 @@ function ProfileForm({ profile, onSave }) {
               </p>
             </div>
           ) : (
-            <div className="text-end">
-              <button className="btn btn-primary px-4" type="submit " >
+            <div className="d-flex align-items-center justify-content-end gap-3">
+              {saved && (
+                <span className="text-success small fw-semibold">
+                  <i className="fa-solid fa-circle-check me-1"></i> Changes saved!
+                </span>
+              )}
+              <button className="btn btn-primary px-4" type="submit">
                 Save Changes
               </button>
             </div>

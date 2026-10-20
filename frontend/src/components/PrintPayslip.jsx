@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { dummyPayslipData } from "../assets/assets.jsx";
 import { format } from "date-fns";
 import Loader from "./Loader";
 import jsPDF from "jspdf";
+import API_BASE_URL from "../config/api";
 
 
 function PrintPayslip() {
@@ -19,16 +19,29 @@ function PrintPayslip() {
   // =========================
 
   useEffect(() => {
+    const fetchPayslip = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("ems_token");
+        const res = await fetch(`${API_BASE_URL}/api/payslips/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPayslip(data);
+        } else {
+          setPayslip(null);
+        }
+      } catch {
+        setPayslip(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const foundPayslip = dummyPayslipData.find(
-      (item) =>
-        String(item._id || item.id) === String(id)
-    );
-
-    setPayslip(foundPayslip);
-
-    setLoading(false);
-
+    if (id) {
+      fetchPayslip();
+    }
   }, [id]);
 
 
@@ -254,50 +267,41 @@ function PrintPayslip() {
       135
     );
 
-
     doc.text(
-      `$${basicSalary.toLocaleString()}`,
+      `Rs. ${basicSalary.toLocaleString("en-IN")}`,
       160,
       135
     );
 
-
     // Allowances
-
     doc.text(
       "Allowances",
       25,
       150
     );
 
-
     doc.text(
-      `+$${allowances.toLocaleString()}`,
+      `+Rs. ${allowances.toLocaleString("en-IN")}`,
       160,
       150
     );
 
-
     // Deductions
-
     doc.text(
       "Deductions",
       25,
       165
     );
 
-
     doc.text(
-      `-$${deductions.toLocaleString()}`,
+      `-Rs. ${deductions.toLocaleString("en-IN")}`,
       160,
       165
     );
 
-
     // =========================
     // NET SALARY
     // =========================
-
     doc.line(
       20,
       175,
@@ -305,11 +309,8 @@ function PrintPayslip() {
       175
     );
 
-
     doc.setFont("helvetica", "bold");
-
     doc.setFontSize(13);
-
 
     doc.text(
       "Net Salary",
@@ -317,9 +318,8 @@ function PrintPayslip() {
       190
     );
 
-
     doc.text(
-      `$${netSalary.toLocaleString()}`,
+      `Rs. ${netSalary.toLocaleString("en-IN")}`,
       160,
       190
     );
@@ -605,77 +605,46 @@ function PrintPayslip() {
 
 
                 {/* BASIC SALARY */}
-
                 <tr>
-
                   <td className="px-4 py-3">
                     Basic Salary
                   </td>
-
                   <td className="px-4 py-3 text-end fw-semibold">
-
-                    ${basicSalary.toLocaleString()}
-
+                    ₹{basicSalary.toLocaleString("en-IN")}
                   </td>
-
                 </tr>
 
-
                 {/* ALLOWANCES */}
-
                 <tr>
-
                   <td className="px-4 py-3">
                     Allowances
                   </td>
-
                   <td className="px-4 py-3 text-end fw-semibold text-success">
-
-                    +${allowances.toLocaleString()}
-
+                    +₹{allowances.toLocaleString("en-IN")}
                   </td>
-
                 </tr>
 
-
                 {/* DEDUCTIONS */}
-
                 <tr>
-
                   <td className="px-4 py-3">
                     Deductions
                   </td>
-
                   <td className="px-4 py-3 text-end fw-semibold text-danger">
-
-                    -${deductions.toLocaleString()}
-
+                    -₹{deductions.toLocaleString("en-IN")}
                   </td>
-
                 </tr>
-
-
               </tbody>
 
-
               {/* NET SALARY */}
-
               <tfoot>
-
                 <tr className="table-light">
-
                   <th className="px-4 py-4">
                     Net Salary
                   </th>
-
-                  <th className="px-4 py-4 text-end fs-5">
-
-                    ${netSalary.toLocaleString()}
-
+                  <th className="px-4 py-4 text-end fs-5 text-primary">
+                    ₹{netSalary.toLocaleString("en-IN")}
                   </th>
-
                 </tr>
-
               </tfoot>
 
 

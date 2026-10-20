@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API_BASE_URL from "../config/api";
 
 function LeaveFormModal({ show, onClose, onAddLeave }) {
   const today = new Date().toISOString().split("T")[0];
@@ -9,42 +10,41 @@ function LeaveFormModal({ show, onClose, onAddLeave }) {
     endDate: "",
     reason: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const newLeave = {
-      id: Date.now(),
-      employee: {
-        firstName: "Anshul",
-        lastName: "Bhargava",
-      },
-      type: formData.type,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      reason: formData.reason,
-      status: "PENDING",
-    };
-
-    onAddLeave(newLeave);
-
-    setFormData({
-      type: "SICK",
-      startDate: "",
-      endDate: "",
-      reason: "",
-    });
-
-    onClose();
+    setLoading(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("ems_token");
+      const res = await fetch(`${API_BASE_URL}/api/leave`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFormData({ type: "SICK", startDate: "", endDate: "", reason: "" });
+        onAddLeave(); // trigger re-fetch in parent
+        onClose();
+      } else {
+        setError(data.error || "Failed to submit leave request.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!show) return null;
@@ -92,6 +92,10 @@ function LeaveFormModal({ show, onClose, onAddLeave }) {
               <p className="ms-2">Submit your leave request for approval</p>
             <form onSubmit={handleSubmit}>
               <div className="modal-body p-4">
+                {/* Error Alert */}
+                {error && (
+                  <div className="alert alert-danger py-2 small">{error}</div>
+                )}
                 {/* Leave Type */}
 
                 <div className="mb-4">
@@ -185,8 +189,13 @@ function LeaveFormModal({ show, onClose, onAddLeave }) {
                 <button
                   type="submit"
                   className="btn btn-primary px-4"
+                  disabled={loading}
                 >
-                  Apply Leave
+                  {loading ? (
+                    <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</>
+                  ) : (
+                    "Apply Leave"
+                  )}
                 </button>
               </div>
             </form>

@@ -1,65 +1,74 @@
 import { useEffect, useState } from "react";
 import Card from "../../components/Card";
-import Sidebar from "../../components/Sidebar";
-import { dummyEmployeeDashboardData } from "../../assets/assets";
+import API_BASE_URL from "../../config/api";
+import { dummyEmployeeDashboardData } from "../../assets/assets.jsx";
 
 function EmployeeDashboardPage() {
-  const [data,setData] = useState(null);
-  const [loading,setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{
-   setData(dummyEmployeeDashboardData);
-   console.log(data);
-   setTimeout(()=>{
-    setLoading(false);
-   },1000)
-  },[])
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const token = localStorage.getItem("ems_token");
+        const res = await fetch(`${API_BASE_URL}/api/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const result = await res.json();
+          setData(result);
+        } else {
+          setData(dummyEmployeeDashboardData);
+        }
+      } catch (err) {
+        console.error("Dashboard error:", err);
+        setData(dummyEmployeeDashboardData);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
 
-  if(loading) return <p>Loading</p>
-  if(!data) return <p>Failed to load the Data</p>
-  console.log(data);
+  if (loading) return <p>Loading...</p>;
+  if (!data) return <p>Failed to load the Data</p>;
 
-  const cards =[
+  const cards = [
     {
-      icon:<i class="fa-regular fa-calendar"></i>,
-      value:data. currentMonthAttendance,
+      icon: <i className="fa-regular fa-calendar"></i>,
+      value: data.currentMonthAttendance ?? 0,
       title: "Days Present",
     },
     {
-      icon:<i class="fa-regular fa-file"></i>,
-      value:data. pendingLeaves,
+      icon: <i className="fa-regular fa-file"></i>,
+      value: data.pendingLeaves ?? 0,
       title: "Pending Leaves",
     },
-     {
-      icon:<i class="fa-solid fa-dollar-sign"></i>,
-      value:data.latestPayslip.netSalary,
-      title: "Latest payslips",
+    {
+      icon: <i className="fa-solid fa-indian-rupee-sign"></i>,
+      value: data.latestPayslip ? `₹${data.latestPayslip.netSalary?.toLocaleString("en-IN")}` : "N/A",
+      title: "Latest Payslip",
     },
-  ]
+  ];
+
   return (
     <>
-     <div className="main-content mt-3">
-      <h3>Welcome,{data.employee.firstName}!</h3>
-      <p>{data.employee.position}-{data.employee.department}</p>
-     </div>
+      <div className="main-content mt-3">
+        <h3>Welcome, {data.employee?.firstName || "Employee"}!</h3>
+        <p>
+          {data.employee?.position || ""}{data.employee?.department ? ` — ${data.employee.department}` : ""}
+        </p>
+      </div>
 
-      <div className="cards-container main-content ">
-         {cards.map((c,indx)=>(
-          <Card key={indx} title={c.title} value={c.value} icon = {c.icon}/>
-         ))}
+      <div className="cards-container main-content">
+        {cards.map((c, indx) => (
+          <Card key={indx} title={c.title} value={c.value} icon={c.icon} />
+        ))}
       </div>
     </>
   );
 }
 
 export default EmployeeDashboardPage;
-
-{
-  /* Main Content */
-}
-{
-  /* <div className=" main-content">
-        <h1 className="mt-4">Main Content</h1>
-        <p>Your page content goes here...</p>
-      </div> */
-}

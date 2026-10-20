@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from "react";
-import { useState } from "react";
-import { dummyLeaveData } from "../../assets/assets";
+import { useCallback, useEffect, useState } from "react";
+import { dummyLeaveData } from "../../assets/assets.jsx";
+import API_BASE_URL from "../../config/api";
 import Loader from "../../components/Loader";
 import Card from "../../components/Card";
 import { format } from "date-fns";
@@ -13,20 +13,36 @@ function EmployeeLeavePage() {
   const [showModal, setShowModal] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
 
-  const fetchLeaves = useCallback(() => {
-    setLeaves(dummyLeaveData);
-    setTimeout(() => {
+  const fetchLeaves = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("ems_token");
+      const res = await fetch(`${API_BASE_URL}/api/leave`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setLeaves(result.data || []);
+        // check if employee is deactivated
+        if (result.employee?.isDeleted) setIsDeleted(true);
+      } else {
+        setLeaves(dummyLeaveData);
+      }
+    } catch {
+      setLeaves(dummyLeaveData);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   }, []);
 
   useEffect(() => {
     fetchLeaves();
   }, [fetchLeaves]);
 
-  const handleAddLeave = (leave) => {
-  setLeaves((prev) => [...prev, leave]);
-};
+  // After a new leave is submitted via modal, refresh from API
+  const handleAddLeave = () => {
+    fetchLeaves();
+  };
 
   if (loading) return <Loader />;
 
@@ -39,42 +55,42 @@ function EmployeeLeavePage() {
     {
       label: "Sick Leaves",
       value: sickCount,
-      icon: <i class="fa-regular fa-temperature-high"></i>,
+      icon: <i className="fa-solid fa-thermometer-half"></i>,
     },
     {
       label: "Casual Leaves",
       value: casualCount,
-      icon: <i class="fa-solid fa-umbrella-beach"></i>,
+      icon: <i className="fa-solid fa-umbrella-beach"></i>,
     },
     {
       label: "Annual Leaves",
       value: annualCount,
-      icon: <i class="fa-solid fa-tree"></i>,
+      icon: <i className="fa-solid fa-tree"></i>,
     },
   ];
 
   return (
     <>
+      {/* Header */}
       <div className="main-content d-flex justify-content-between align-items-center">
         <div>
           <h2 className="mb-1">Leave Management</h2>
-          <p className="ms-4 text-muted mb-0">
-            Your leave history and requests
-          </p>
+          <p className="text-muted mb-0">Your leave history and requests</p>
         </div>
-
         {!isDeleted && (
           <button
             onClick={() => setShowModal(true)}
             type="button"
-            className="btn btn-primary signIn-btn"
+            className="btn btn-primary"
             style={{ width: "170px" }}
           >
             + Apply For Leave
           </button>
         )}
       </div>
-      <div className="cards-container main-content ">
+
+      {/* Stats Cards */}
+      <div className="cards-container main-content">
         {leaveStats.map((c) => (
           <Card
             key={c.label}
@@ -86,70 +102,75 @@ function EmployeeLeavePage() {
         ))}
       </div>
 
+      {/* Leave Table - only THIS employee's leaves */}
       <div className="main-content">
-        <div className="card shadow-sm border-1">
-          <div className="card-body">
+        <div className="card shadow-sm border-0 rounded-4">
+          <div className="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <h6 className="fw-bold mb-0">My Leave Requests</h6>
+            <small className="text-muted">{leaves.length} records</small>
+          </div>
+          <div className="card-body p-0">
             <div className="table-responsive">
-              <table className="table table-hover custom-table table-striped align-middle ">
-                <thead className="table ">
-                  <tr className="p-2">
-                    <th>employee</th>
-                    <th>type</th>
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light small text-muted">
+                  <tr>
+                    <th className="ps-4">Type</th>
                     <th>Dates</th>
-                    <th>reason</th>
-                    <th>status</th>
+                    <th>Reason</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
-
-                {leaves.length > 0 ? (
-                  <tbody>
-                    {leaves.map((leave) => (
+                <tbody>
+                  {leaves.length > 0 ? (
+                    leaves.map((leave) => (
                       <tr key={leave._id || leave.id}>
-                        <td>
-                          {leave.employee?.firstName} {leave.employee?.lastName}
+                        <td className="ps-4 fw-medium">
+                          <span className="badge bg-primary-subtle text-primary px-2 py-1">
+                            {leave.type}
+                          </span>
                         </td>
-                        <td>{leave.type}</td>
                         <td>
-                          {format(new Date(leave.startDate), "MMM dd")}-
-                          {format(new Date(leave.endDate), "MMM dd yyyy")}
+                          {format(new Date(leave.startDate), "MMM dd")} —{" "}
+                          {format(new Date(leave.endDate), "MMM dd, yyyy")}
                         </td>
-                        <td>{leave.reason}</td>
+                        <td className="text-muted" style={{ maxWidth: "220px" }}>
+                          {leave.reason}
+                        </td>
                         <td>
                           <span
-                            className={`badge ${
+                            className={`badge px-2 py-1 ${
                               leave.status === "APPROVED"
-                                ? "bg-success"
+                                ? "bg-success-subtle text-success"
                                 : leave.status === "REJECTED"
-                                  ? "bg-danger"
-                                  : leave.status === "PENDING"
-                                    ? "bg-warning text-dark"
-                                    : "bg-secondary"
+                                ? "bg-danger-subtle text-danger"
+                                : "bg-warning-subtle text-warning"
                             }`}
                           >
                             {leave.status}
                           </span>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                ) : (
-                  <div className="text-center py-5">
-                    <h5 className="text-secondary">No Leave Requests Found</h5>
-                    <p className="text-muted">
-                      You haven't applied for any leave yet.
-                    </p>
-                  </div>
-                )}
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center py-5 text-muted">
+                        <i className="fa-regular fa-calendar-xmark fs-3 mb-2 d-block"></i>
+                        No leave requests found. Apply for one above!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
+
       <LeaveFormModal
-  show={showModal}
-  onClose={() => setShowModal(false)}
-  onAddLeave={handleAddLeave}
-/>
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onAddLeave={handleAddLeave}
+      />
     </>
   );
 }

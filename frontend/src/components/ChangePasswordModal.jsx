@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import API_BASE_URL from "../config/api";
 
 function ChangePasswordModal({ open, onClose }) {
   const [loading, setLoading] = useState(false);
@@ -27,22 +28,46 @@ function ChangePasswordModal({ open, onClose }) {
     setMessage({ type: "", text: "" });
 
     try {
-      // Dummy API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setMessage({
-        type: "success",
-        text: "Password updated successfully.",
+      const token = localStorage.getItem("ems_token");
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        }),
       });
 
-      setFormData({
-        currentPassword: "",
-        newPassword: "",
-      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setMessage({
+          type: "success",
+          text: "Password updated successfully.",
+        });
+
+        setFormData({
+          currentPassword: "",
+          newPassword: "",
+        });
+
+        // Close after a short delay so the user sees success
+        setTimeout(() => {
+          if (onClose) onClose();
+        }, 1500);
+      } else {
+        setMessage({
+          type: "danger",
+          text: data.error || "Failed to update password.",
+        });
+      }
     } catch (err) {
       setMessage({
         type: "danger",
-        text: "Something went wrong.",
+        text: "Network error. Failed to update password.",
       });
     }
 

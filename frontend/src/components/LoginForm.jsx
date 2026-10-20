@@ -1,33 +1,71 @@
 import LoginLeft from "./LoginLeft";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import API_BASE_URL from "../config/api";
 
 function LoginForm({ role, title, subtitle }) {
-    let[formData , setFormData] = useState({
-        email:"",
-        password:"",
+    const navigate = useNavigate();
+    const { login } = useAuth();
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
     });
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-   let handleInputChange =(event)=>{
-    let fieldName = event.target.name;
-    let newValue = event.target.value;
+    const handleInputChange = (event) => {
+        const fieldName = event.target.name;
+        const newValue = event.target.value;
 
-    setFormData((curData)=>{
-        return{...curData ,[fieldName]:newValue};
-    })
-   };
+        setFormData((curData) => ({
+            ...curData,
+            [fieldName]: newValue,
+        }));
+    };
 
-   let handleSubmit = (event)=>{
-    event.preventDefault();
-    console.log(formData);
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError("");
+        setLoading(true);
 
-    setFormData({
-         email:"",
-        password:"",
-    });
-   }
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    role_type: role,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || "Login failed");
+                setLoading(false);
+                return;
+            }
+
+            login(data.user, data.token);
+
+            if (data.user.role === "ADMIN") {
+                navigate("/admin/dashboard");
+            } else {
+                navigate("/employee/dashboard");
+            }
+        } catch (err) {
+            console.error("Login request error:", err);
+            setError("Server error. Please ensure backend is running.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
     <>
@@ -83,9 +121,18 @@ function LoginForm({ role, title, subtitle }) {
                       }}
                     />
                   </div>
+                  {error && (
+                    <div className="alert alert-danger mt-3 py-2" role="alert">
+                      {error}
+                    </div>
+                  )}
                   <div className="mt-3">
-                    <button type="submit" className="btn btn-primary btn-lg signIn-btn">
-                      Sign in
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-lg signIn-btn"
+                      disabled={loading}
+                    >
+                      {loading ? "Signing in..." : "Sign in"}
                     </button>
                   </div>
                 </form>

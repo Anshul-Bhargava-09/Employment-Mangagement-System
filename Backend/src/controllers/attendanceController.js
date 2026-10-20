@@ -45,7 +45,7 @@ export const clockInOut = async (req, res) => {
             const workingHours = parseFloat(diffHours.toFixed(2))
             let dayType = "Half Day";
             if (workingHours >= 8) dayType = "Full Day";
-            else if (workingHours >= 6) dayType = "Three Quater Day";
+            else if (workingHours >= 6) dayType = "Three Quarter Day";
             else if (workingHours >= 4) dayType = "Half Day";
             else dayType = "Short Day";
 
@@ -65,22 +65,53 @@ export const clockInOut = async (req, res) => {
     }
 }
 
-// Get attendance for employee
+// Get attendance for employee (or all for admin)
 // GET /api/attendance
 export const getAttendance = async (req, res) => {
     try {
         const session = req.session;
-        const employee = await Employee.findOne({ userId: session.userId })
+
+        // If admin, return all attendance records populated with employee details
+        if (session.role === "ADMIN") {
+            const limit = parseInt(req.query.limit || 50);
+            const history = await Attendance.find()
+                .populate("employeeId", "firstName lastName email department position")
+                .sort({ date: -1 })
+                .limit(limit);
+
+            return res.json({
+                data: history,
+                isAdmin: true,
+            });
+        }
+
+        const employee = await Employee.findOne({ userId: session.userId });
         if (!employee) return res.status(404).json({ error: "Employee not found" });
 
         const limit = parseInt(req.query.limit || 30);
-        const history = await Attendance.find({employeeId: employee._id}).sort({date: -1}).limit(limit)
+        const history = await Attendance.find({ employeeId: employee._id })
+            .sort({ date: -1 })
+            .limit(limit);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayRecord = await Attendance.findOne({
+            employeeId: employee._id,
+            date: today,
+        });
 
         return res.json({
             data: history,
-            employee: {isDeleted: employee.isDeleted}
-        })
+            today: todayRecord,
+            employee: {
+                _id: employee._id,
+                firstName: employee.firstName,
+                lastName: employee.lastName,
+                isDeleted: employee.isDeleted,
+            },
+        });
     } catch (error) {
+        console.error("Fetch attendance error:", error);
         return res.status(500).json({ error: "Failed to fetch attendance" });
     }
-}
+};

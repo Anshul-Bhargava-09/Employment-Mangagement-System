@@ -6,16 +6,23 @@ import bcrypt from "bcrypt";
 // GET /api/employees
 export const getEmployees = async (req, res) => {
   try {
-    const { department } = req.query;
+    const { department, includeDeleted } = req.query;
 
     const where = {};
 
-    if (department) {
+    if (department && department !== "All") {
       where.department = department;
     }
 
-    const employees = (await Employee.find(where))
-      .toSorted({ createdAt: -1 })
+    // Default to active employees unless explicitly requesting deleted/all
+    if (includeDeleted === "only") {
+      where.isDeleted = true;
+    } else if (includeDeleted !== "true") {
+      where.isDeleted = { $ne: true };
+    }
+
+    const employees = await Employee.find(where)
+      .sort({ createdAt: -1 })
       .populate("userId", "email role")
       .lean();
 
@@ -33,6 +40,30 @@ export const getEmployees = async (req, res) => {
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: "Failed to fetch employees" });
+  }
+};
+
+// Get single employee by ID
+// GET /api/employees/:id
+export const getEmployeeById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await Employee.findById(id).populate("userId", "email role").lean();
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+    return res.json({
+      ...employee,
+      id: employee._id.toString(),
+      user: employee.userId
+        ? {
+            email: employee.userId.email,
+            role: employee.userId.role,
+          }
+        : null,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch employee" });
   }
 };
 
@@ -65,7 +96,7 @@ export const createEmployee = async (req, res) => {
     const user = await User.create({
       email,
       password: hashed,
-      role: role || "",
+      role: role || "EMPLOYEE",
     });
 
     const employee = await Employee.create({
@@ -96,8 +127,7 @@ export const createEmployee = async (req, res) => {
 };
 
 // Update employees
-//Put/api/employee:id
-
+// PUT /api/employees/:id
 export const updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
@@ -115,48 +145,62 @@ export const updateEmployee = async (req, res) => {
       role,
       bio,
       employmentStatus,
+      isDeleted,
     } = req.body;
 
     const employee = await Employee.findById(id);
     if (!employee) return res.status(404).json({ error: "Employee not found" });
 
-    await Employee.findByIdAndUpdate(id, {
-      firstName,
-      lastName,
-      email,
-      phone,
-      position,
-      department: department || "Engineering",
-      basicSalary: Number(basicSalary) || 0,
-      allowances: Number(allowances) || 0,
-      deductions: Number(deductions) || 0,
-      employmentStatus: employmentStatus || "ACTIVE",
-      bio: bio || "",
-    });
+    const updateData = {
+      firstName: firstName ?? employee.firstName,
+      lastName: lastName ?? employee.lastName,
+      email: email ?? employee.email,
+      phone: phone ?? employee.phone,
+      position: position ?? employee.position,
+      department: department ?? employee.department,
+      basicSalary: basicSalary !== undefined ? Number(basicSalary) : employee.basicSalary,
+      allowances: allowances !== undefined ? Number(allowances) : employee.allowances,
+      deductions: deductions !== undefined ? Number(deductions) : employee.deductions,
+      employmentStatus: employmentStatus ?? employee.employmentStatus,
+      bio: bio !== undefined ? bio : employee.bio,
+    };
 
-    // Update user record
-    const userUpdate = { email };
+    if (isDeleted !== undefined) {
+      updateData.isDeleted = isDeleted;
+      if (isDeleted === false && !employmentStatus) {
+        updateData.employmentStatus = "ACTIVE";
+      }
+    }
 
+    const updatedEmp = await Employee.findByIdAndUpdate(id, updateData, { new: true });
+
+    // Update user record if email, role, or password changed
+    const userUpdate = {};
+    if (email) userUpdate.email = email;
     if (role) userUpdate.role = role;
+    if (password && password.trim().length > 0) {
+      userUpdate.password = await bcrypt.hash(password, 10);
+    }
 
-    if (password) userUpdate.password = await bcrypt.hash(password, 10);
-
-    await User.findByIdAndUpdate(employee.userId, userUpdate);
+    if (Object.keys(userUpdate).length > 0 && employee.userId) {
+      await User.findByIdAndUpdate(employee.userId, userUpdate);
+    }
 
     return res.json({
       success: true,
-      employee,
+      employee: updatedEmp,
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ error: "Email already exists" });
     }
 
+    console.error("Update employee error:", error);
     return res.status(500).json({ error: "Failed to update employee" });
   }
 };
 
-
+// Soft delete employee
 // DELETE /api/employees/:id
 export const deleteEmployee = async (req, res) => {
   try {
@@ -177,6 +221,7 @@ export const deleteEmployee = async (req, res) => {
 
     return res.json({
       success: true,
+      message: "Employee moved to previous employees history",
     });
   } catch (error) {
     return res.status(500).json({

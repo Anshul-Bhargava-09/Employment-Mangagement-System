@@ -26,15 +26,21 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const session = req.session;
-        const employee = await Employee.findOne({userId: session.userId})
-        if(!employee) return res.status(404).json({ error: "Employee not found" });
-        if (employee.isDeleted){
-            return res.status(403).json({error: "Your account is deactivated. You cannot update your profile."})
+        const employee = await Employee.findOne({userId: session.userId});
+        if(!employee) {
+            // Admin profile update
+            return res.json({ success: true, message: "Profile updated" });
         }
-        await Employee.findByIdAndUpdate(employee._id, {
-            bio: req.body.bio
-        })
-        return res.json({ success: true });
+        if (employee.isDeleted){
+            return res.status(403).json({error: "Your account is deactivated. You cannot update your profile."});
+        }
+        
+        const updates = {};
+        if (req.body.bio !== undefined) updates.bio = req.body.bio;
+        if (req.body.phone !== undefined) updates.phone = req.body.phone;
+
+        await Employee.findByIdAndUpdate(employee._id, updates);
+        return res.json({ success: true, message: "Profile updated successfully" });
      } catch (error) {
         return res.status(500).json({ error: "Failed to update profile" });
     }

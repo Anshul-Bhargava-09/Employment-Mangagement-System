@@ -2,10 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "Server.js",
+  "main": "src/server.js",
+  "type": "module",
   "scripts": {
     "server": "nodemon src/server.js",
-    "start": "node server.js",
+    "start": "node src/server.js",
     "seed": "node seed.js"
   },
   "keywords": [],

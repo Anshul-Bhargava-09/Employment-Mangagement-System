@@ -10,6 +10,7 @@ import Sidebar from "./components/Sidebar";
 import EmployeeForm from "./pages/admin/EmployeeForm";
 
 import PrintPayslip from "./components/PrintPayslip";
+import { ProtectedRoute } from "./context/ProtectedRoute";
 
 
 function App() {
@@ -65,7 +66,11 @@ function App() {
 
       <Route
         path="/employee/*"
-        element={<EmployeePages />}
+        element={
+          <ProtectedRoute requiredRole="EMPLOYEE">
+            <EmployeePages />
+          </ProtectedRoute>
+        }
       />
 
 
@@ -75,7 +80,11 @@ function App() {
 
       <Route
         path="/admin/*"
-        element={<AdminPages />}
+        element={
+          <ProtectedRoute requiredRole="ADMIN">
+            <AdminPages />
+          </ProtectedRoute>
+        }
       />
 
 

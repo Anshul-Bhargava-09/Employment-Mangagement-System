@@ -18,60 +18,37 @@ function Sidebar({role}) {
       </button>
 
       {/* Fixed Sidebar (Only lg and above) */}
-      <div
-        className="d-none d-lg-block bg-dark text-white position-fixed overflow-auto"
+      <aside
+        className="d-none d-lg-flex flex-column ems-sidebar position-fixed"
         style={{
-          width: "300px",
+          width: "280px",
           height: "100vh",
           left: 0,
           top: 0,
+          zIndex: 1040,
         }}
       >
-         <div className="d-flex align-items-center ms-4 mt-4">
-        <i className="fa-regular fa-user fa-2xl"></i>
-
-        <div className="ms-4">
-          <h6 className="mb-0">Employee MS</h6>
-          <p className="mb-0" style={{ fontSize: "12px" }}>
-            Management System
-          </p>
-        </div>
-      </div>
-      <SidebarContent menu={menu}/>
-     
-           
-      </div>
+        <SidebarContent menu={menu} />
+      </aside>
 
       {/* Offcanvas Sidebar (Only md and below) */}
       <div
-        className="offcanvas offcanvas-start bg-dark text-white d-lg-none"
+        className="offcanvas offcanvas-start ems-sidebar text-white d-lg-none"
         tabIndex="-1"
         id="sidebar"
-        data-bs-backdrop="static"
-        style={{ width: "300px" }}
+        data-bs-backdrop="true"
+        style={{ width: "280px" }}
       > 
-        <div className="offcanvas-header  ">
-           <div className="d-flex align-items-center ms-3 mt-3">
-        <i className="fa-regular fa-user fa-2xl"></i>
-
-        <div className="ms-3">
-          <h6 className="mb-0">Employee MS</h6>
-          <p className="mb-0" style={{ fontSize: "12px" }}>
-            Management System
-          </p>
-        </div>
-      </div>
-          <button style={{color:"white"}}
+        <div className="offcanvas-header justify-content-end p-2 pb-0">
+          <button
             type="button"
-            className="btn-close  btn-close-white btn btn-light"
+            className="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
           ></button>
-            
         </div>
-        <SidebarContent menu={menu}/>
-        
-
-       
+        <div className="offcanvas-body p-0 d-flex flex-column h-100">
+          <SidebarContent menu={menu} />
+        </div>
       </div>
 
      

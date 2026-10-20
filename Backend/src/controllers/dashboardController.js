@@ -3,6 +3,7 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import Payslip from "../models/Payslips.js";
+import { DEPARTMENTS } from "../constants/Departments.js";
 
 // Get dashboard for employee and admin
 // GET /api/dashboard

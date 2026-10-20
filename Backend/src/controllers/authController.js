@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Employee from "../models/Employee.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -42,10 +43,25 @@ export const login = async (req, res) => {
       });
     }
 
+    let employeeInfo = {
+      firstName: user.role === "ADMIN" ? "Admin" : "",
+      lastName: "",
+    };
+
+    if (user.role === "EMPLOYEE") {
+      const emp = await Employee.findOne({ userId: user._id });
+      if (emp) {
+        employeeInfo.firstName = emp.firstName || "";
+        employeeInfo.lastName = emp.lastName || "";
+      }
+    }
+
     const payload = {
       userId: user._id.toString(),
       role: user.role,
       email: user.email,
+      firstName: employeeInfo.firstName,
+      lastName: employeeInfo.lastName,
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -69,12 +85,32 @@ export const login = async (req, res) => {
 // Get session for employee and admin
 // GET /api/auth/session
 
-export const session = (req, res) => {
-  const session = req.session;
+export const session = async (req, res) => {
+  try {
+    const session = req.session;
+    let firstName = session.firstName || (session.role === "ADMIN" ? "Admin" : "");
+    let lastName = session.lastName || "";
 
-  return res.json({
-    user: session,
-  });
+    if (!firstName && session.role === "EMPLOYEE") {
+      const emp = await Employee.findOne({ userId: session.userId });
+      if (emp) {
+        firstName = emp.firstName || "";
+        lastName = emp.lastName || "";
+      }
+    }
+
+    return res.json({
+      user: {
+        ...session,
+        firstName,
+        lastName,
+      },
+    });
+  } catch (error) {
+    return res.json({
+      user: req.session,
+    });
+  }
 };
 
 // Change password for employee and admin

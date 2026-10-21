@@ -11,6 +11,8 @@ function AdminPayslipsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
+  const [toastMessage, setToastMessage] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchPayslips = useCallback(async () => {
     setLoading(true);
@@ -40,7 +42,7 @@ function AdminPayslipsPage() {
       });
       if (res.ok) {
         const result = await res.json();
-        setEmployees(result.data || result || []);
+        setEmployees(Array.isArray(result) ? result : result.data || []);
       } else {
         setEmployees(dummyEmployeeData);
       }
@@ -56,6 +58,48 @@ function AdminPayslipsPage() {
 
   const handleGeneratePayslip = () => {
     fetchPayslips();
+    setToastMessage({
+      type: "success",
+      text: "Payslip generated successfully!",
+    });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleDeletePayslip = async (id, empName) => {
+    if (!window.confirm(`Are you sure you want to delete payslip for ${empName || "this employee"}?`)) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const token = localStorage.getItem("ems_token");
+      const res = await fetch(`${API_BASE_URL}/api/payslips/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setPayslips((prev) => prev.filter((p) => String(p._id || p.id) !== String(id)));
+        setToastMessage({
+          type: "success",
+          text: "Payslip deleted successfully!",
+        });
+        setTimeout(() => setToastMessage(null), 3500);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToastMessage({
+          type: "danger",
+          text: err.error || "Failed to delete payslip",
+        });
+      }
+    } catch {
+      setToastMessage({
+        type: "danger",
+        text: "Network error deleting payslip",
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (loading) return <Loader />;
@@ -89,6 +133,32 @@ function AdminPayslipsPage() {
           <i className="fa-solid fa-plus me-2"></i>Generate Payslip
         </button>
       </div>
+
+      {/* Feedback Toast / Alert Banner */}
+      {toastMessage && (
+        <div className="main-content mt-2">
+          <div
+            className={`alert alert-${toastMessage.type} alert-dismissible fade show rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between`}
+            role="alert"
+          >
+            <div>
+              <i
+                className={`fa-solid ${
+                  toastMessage.type === "success"
+                    ? "fa-circle-check text-success"
+                    : "fa-triangle-exclamation text-danger"
+                } me-2`}
+              ></i>
+              {toastMessage.text}
+            </div>
+            <button
+              type="button"
+              className="btn-close py-2"
+              onClick={() => setToastMessage(null)}
+            ></button>
+          </div>
+        </div>
+      )}
 
       <div className="main-content">
         {/* Summary Cards */}
@@ -150,7 +220,7 @@ function AdminPayslipsPage() {
                   <th>Allowances</th>
                   <th>Deductions</th>
                   <th>Net Salary</th>
-                  <th className="text-center">Action</th>
+                  <th className="text-center">Actions</th>
                 </tr>
               </thead>
 
@@ -159,11 +229,14 @@ function AdminPayslipsPage() {
                   filteredPayslips.map((payslip) => {
                     const emp = payslip.employee || payslip.employeeId;
                     const payslipId = payslip._id || payslip.id;
+                    const empName = emp ? `${emp.firstName || ""} ${emp.lastName || ""}`.trim() : "";
+                    const isDeleting = String(deletingId) === String(payslipId);
+
                     return (
                       <tr key={payslipId}>
                         <td className="ps-4 fw-medium">
                           <div>
-                            {emp ? `${emp.firstName || ""} ${emp.lastName || ""}`.trim() : "—"}
+                            {empName || "—"}
                           </div>
                           {emp?.department && (
                             <small className="text-muted">{emp.department}</small>
@@ -182,13 +255,28 @@ function AdminPayslipsPage() {
                           ₹{payslip.netSalary?.toLocaleString("en-IN") || 0}
                         </td>
                         <td className="text-center">
-                          <a
-                            href={`/payslip/${payslipId}`}
-                            className="btn btn-sm btn-outline-secondary"
-                            title="View/Print Payslip"
-                          >
-                            <i className="fa-solid fa-file-invoice me-1"></i> View
-                          </a>
+                          <div className="d-flex justify-content-center gap-2">
+                            <a
+                              href={`/payslip/${payslipId}`}
+                              className="btn btn-sm btn-outline-primary"
+                              title="View/Print Payslip"
+                            >
+                              <i className="fa-solid fa-file-invoice me-1"></i> View
+                            </a>
+                            <button
+                              type="button"
+                              disabled={isDeleting}
+                              onClick={() => handleDeletePayslip(payslipId, empName)}
+                              className="btn btn-sm btn-outline-danger"
+                              title="Delete Payslip"
+                            >
+                              {isDeleting ? (
+                                <span className="spinner-border spinner-border-sm"></span>
+                              ) : (
+                                <i className="fa-solid fa-trash-can"></i>
+                              )}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -206,6 +294,7 @@ function AdminPayslipsPage() {
           </div>
         </div>
       </div>
+
 
       <GeneratePayslips
         show={showModal}

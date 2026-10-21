@@ -65,7 +65,9 @@ function PrintPayslip() {
 
     const employeeName =
       payslip.employeeName ||
-      payslip.employee?.name ||
+      (payslip.employee?.firstName || payslip.employee?.lastName
+        ? `${payslip.employee.firstName || ""} ${payslip.employee.lastName || ""}`.trim()
+        : null) ||
       "Employee";
 
 
@@ -409,7 +411,9 @@ function PrintPayslip() {
 
   const employeeName =
     payslip.employeeName ||
-    payslip.employee?.name ||
+    (payslip.employee?.firstName || payslip.employee?.lastName
+      ? `${payslip.employee.firstName || ""} ${payslip.employee.lastName || ""}`.trim()
+      : null) ||
     "Employee";
 
 

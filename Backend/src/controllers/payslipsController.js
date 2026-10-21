@@ -127,3 +127,28 @@ export const getPayslipById = async (req, res) => {
         });
     }
 };
+
+// Delete payslip
+// DELETE /api/payslips/:id
+export const deletePayslip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const payslip = await Payslip.findByIdAndDelete(id);
+
+        if (!payslip) {
+            return res.status(404).json({
+                error: "Payslip not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Payslip deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete payslip error:", error);
+        return res.status(500).json({
+            error: "Failed to delete payslip"
+        });
+    }
+};

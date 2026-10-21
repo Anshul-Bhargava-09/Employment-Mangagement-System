@@ -32,11 +32,24 @@ function AdminLeavePage() {
       } else {
         const errData = await res.json().catch(() => ({}));
         console.error("Fetch leaves error:", errData);
-        setLeaves(dummyLeaveData);
+        // Only fallback to dummy data if user has no data and not 401/403
+        if (res.status === 401 || res.status === 403) {
+          setLeaves([]);
+          setToastMessage({
+            type: "danger",
+            text: errData.error || "Session expired or unauthorized. Please re-login.",
+          });
+        } else {
+          setLeaves([]);
+        }
       }
     } catch (err) {
       console.error("Network error fetching leaves:", err);
-      setLeaves(dummyLeaveData);
+      setLeaves([]);
+      setToastMessage({
+        type: "danger",
+        text: "Could not connect to server. Ensure backend is running.",
+      });
     } finally {
       setLoading(false);
     }
@@ -79,17 +92,46 @@ function AdminLeavePage() {
         });
         setTimeout(() => setToastMessage(null), 3500);
       } else {
-        setToastMessage({
-          type: "danger",
-          text: data.error || `Failed to update status to ${status}`,
-        });
+        // If the ID was dummy demo data (not in MongoDB), update locally so user can still test UI
+        const isDummy = dummyLeaveData.some((d) => String(d._id || d.id) === String(id));
+        if (isDummy) {
+          setLeaves((prev) =>
+            prev.map((l) =>
+              String(l._id || l.id) === String(id) ? { ...l, status } : l
+            )
+          );
+          setToastMessage({
+            type: "warning",
+            text: `Updated locally (sample record not in DB). Status is now ${status.toLowerCase()}.`,
+          });
+          setTimeout(() => setToastMessage(null), 3500);
+        } else {
+          setToastMessage({
+            type: "danger",
+            text: data.error || `Failed to update status to ${status}`,
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to update leave status", err);
-      setToastMessage({
-        type: "danger",
-        text: "Network error while updating leave status. Please check backend connection.",
-      });
+      // Fallback update for dummy demo data when offline
+      const isDummy = dummyLeaveData.some((d) => String(d._id || d.id) === String(id));
+      if (isDummy) {
+        setLeaves((prev) =>
+          prev.map((l) =>
+            String(l._id || l.id) === String(id) ? { ...l, status } : l
+          )
+        );
+        setToastMessage({
+          type: "warning",
+          text: `Updated locally in demo mode. Status: ${status}`,
+        });
+      } else {
+        setToastMessage({
+          type: "danger",
+          text: "Network error while updating leave status. Please check backend connection.",
+        });
+      }
     } finally {
       setProcessing(null);
     }
